@@ -2,7 +2,7 @@ use aes_gcm::{Aes256Gcm, Key, Nonce};
 use aes_gcm::aead::{Aead, KeyInit};
 use sha2::{Sha256, Digest};
 use rand::RngCore;
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 
 pub fn encrypt_data(data: &[u8], password: &str) -> Result<Vec<u8>> {
     let mut hasher = Sha256::new();

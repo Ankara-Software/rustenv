@@ -2,9 +2,9 @@
 set -e
 
 # rustenv Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/anilcan-kara/rustenv/master/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/Ankara-Software/rustenv/master/install.sh | sh
 
-REPO="anilcan-kara/rustenv"
+REPO="Ankara-Software/rustenv"
 VERSION="0.1.1"
 
 echo "Detecting system architecture..."

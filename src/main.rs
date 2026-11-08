@@ -8,7 +8,7 @@ mod export;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process;
 use clap::{Parser, Subcommand};
 use colored::*;
