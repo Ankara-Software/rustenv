@@ -9,29 +9,47 @@ permissions:
   contents: write
 
 jobs:
+  tickets:
+    name: Artifact tickets
+    runs-on: [self-hosted, s31]
+    outputs:
+      tickets: ${{ steps.t.outputs.tickets }}
+    steps:
+      - id: t
+        uses: Ankara-Software/ci-actions/artifact-ticket@v1
+        with:
+          names: rustenv-linux-x64 rustenv-linux-arm64 rustenv-darwin-x64 rustenv-darwin-arm64 rustenv-win32-x64.exe
+          hours: "6"
+
   build:
     name: Build - ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+    needs: tickets
+    runs-on: ${{ fromJSON(matrix.runner) }}
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: linux
+            runner: '["self-hosted","s31"]'
             target: x86_64-unknown-linux-gnu
             asset_name: rustenv-linux-x64
             use_cross: false
-          - os: ubuntu-latest
+          - os: linux
+            runner: '["self-hosted","s31"]'
             target: aarch64-unknown-linux-gnu
             asset_name: rustenv-linux-arm64
             use_cross: true
-          - os: macos-latest
+          - os: macos
+            runner: '["self-hosted","macOS","s11"]'
             target: x86_64-apple-darwin
             asset_name: rustenv-darwin-x64
             use_cross: false
-          - os: macos-latest
+          - os: macos
+            runner: '["self-hosted","macOS","s11"]'
             target: aarch64-apple-darwin
             asset_name: rustenv-darwin-arm64
             use_cross: false
-          - os: windows-latest
+          - os: windows
+            runner: '["self-hosted","Windows","s18"]'
             target: x86_64-pc-windows-msvc
             asset_name: rustenv-win32-x64.exe
             use_cross: false
@@ -58,33 +76,64 @@ jobs:
         run: cross build --target ${{ matrix.target }} --release
 
       - name: Prepare asset (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows'
         run: |
           mv target\${{ matrix.target }}\release\rustenv.exe ${{ matrix.asset_name }}
 
       - name: Prepare asset (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows'
         run: |
           mv target/${{ matrix.target }}/release/rustenv ${{ matrix.asset_name }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: Ankara-Software/ci-actions/artifact-upload@v1
         with:
           name: ${{ matrix.asset_name }}
           path: ${{ matrix.asset_name }}
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)[matrix.asset_name]) }}
 
   release:
     name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
+    needs: [tickets, build]
+    runs-on: [self-hosted, s31]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+      - name: Download rustenv-linux-x64
+        uses: Ankara-Software/ci-actions/artifact-download@v1
         with:
-          path: ./artifacts
+          name: rustenv-linux-x64
+          path: ./artifacts/rustenv-linux-x64
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)['rustenv-linux-x64']) }}
+
+      - name: Download rustenv-linux-arm64
+        uses: Ankara-Software/ci-actions/artifact-download@v1
+        with:
+          name: rustenv-linux-arm64
+          path: ./artifacts/rustenv-linux-arm64
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)['rustenv-linux-arm64']) }}
+
+      - name: Download rustenv-darwin-x64
+        uses: Ankara-Software/ci-actions/artifact-download@v1
+        with:
+          name: rustenv-darwin-x64
+          path: ./artifacts/rustenv-darwin-x64
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)['rustenv-darwin-x64']) }}
+
+      - name: Download rustenv-darwin-arm64
+        uses: Ankara-Software/ci-actions/artifact-download@v1
+        with:
+          name: rustenv-darwin-arm64
+          path: ./artifacts/rustenv-darwin-arm64
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)['rustenv-darwin-arm64']) }}
+
+      - name: Download rustenv-win32-x64.exe
+        uses: Ankara-Software/ci-actions/artifact-download@v1
+        with:
+          name: rustenv-win32-x64.exe
+          path: ./artifacts/rustenv-win32-x64.exe
+          ticket: ${{ toJSON(fromJSON(needs.tickets.outputs.tickets)['rustenv-win32-x64.exe']) }}
 
       - name: Flatten artifacts directory
         run: |
