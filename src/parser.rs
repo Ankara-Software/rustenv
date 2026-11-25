@@ -1,7 +1,7 @@
+use anyhow::{Context, Result};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
-use anyhow::{Context, Result};
 
 pub fn parse_env_file(path: &Path) -> Result<BTreeMap<String, String>> {
     let mut map = BTreeMap::new();
@@ -22,7 +22,9 @@ pub fn parse_env_file(path: &Path) -> Result<BTreeMap<String, String>> {
             let key = line[..pos].trim().to_string();
             let mut val = line[pos + 1..].trim().to_string();
 
-            if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+            if (val.starts_with('"') && val.ends_with('"'))
+                || (val.starts_with('\'') && val.ends_with('\''))
+            {
                 val = val[1..val.len() - 1].to_string();
             }
 
@@ -44,8 +46,7 @@ pub fn write_env_file(path: &Path, variables: &BTreeMap<String, String>) -> Resu
         content.push_str(&format!("{}={}\n", k, formatted_value));
     }
 
-    fs::write(path, content)
-        .with_context(|| format!("Failed to write .env file: {:?}", path))?;
+    fs::write(path, content).with_context(|| format!("Failed to write .env file: {:?}", path))?;
 
     Ok(())
 }
@@ -53,17 +54,23 @@ pub fn write_env_file(path: &Path, variables: &BTreeMap<String, String>) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
     use tempfile::NamedTempFile;
 
     #[test]
     fn test_parse_env_file() {
-        let file = NamedTempFile::new().unwrap();
-        let content = "# Comment\nDATABASE_URL=postgres://localhost/db\nSECRET_KEY=\"mysecret\"\nPORT=3000\n";
-        fs::write(file.path(), content).unwrap();
+        let mut file = NamedTempFile::new().unwrap();
+        let content =
+            "# Comment\nDATABASE_URL=postgres://localhost/db\nSECRET_KEY=\"mysecret\"\nPORT=3000\n";
+        file.write_all(content.as_bytes()).unwrap();
+        file.flush().unwrap();
 
         let parsed = parse_env_file(file.path()).unwrap();
         assert_eq!(parsed.len(), 3);
-        assert_eq!(parsed.get("DATABASE_URL").unwrap(), "postgres://localhost/db");
+        assert_eq!(
+            parsed.get("DATABASE_URL").unwrap(),
+            "postgres://localhost/db"
+        );
         assert_eq!(parsed.get("SECRET_KEY").unwrap(), "mysecret");
         assert_eq!(parsed.get("PORT").unwrap(), "3000");
     }
