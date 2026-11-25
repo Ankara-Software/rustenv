@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use colored::*;
+use std::collections::BTreeMap;
 
 pub fn print_diff(env1: &BTreeMap<String, String>, env2: &BTreeMap<String, String>, mask: bool) {
     let mut all_keys = std::collections::BTreeSet::new();
@@ -46,7 +46,12 @@ pub fn print_diff(env1: &BTreeMap<String, String>, env2: &BTreeMap<String, Strin
                 } else {
                     v2.clone()
                 };
-                println!("{} {}: {}", "+".green().bold(), key.bold(), display_v2.green());
+                println!(
+                    "{} {}: {}",
+                    "+".green().bold(),
+                    key.bold(),
+                    display_v2.green()
+                );
             }
             (Some(v1), None) => {
                 has_changes = true;

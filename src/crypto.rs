@@ -1,8 +1,8 @@
-use aes_gcm::{Aes256Gcm, Key, Nonce};
 use aes_gcm::aead::{Aead, KeyInit};
-use sha2::{Sha256, Digest};
-use rand::RngCore;
+use aes_gcm::{Aes256Gcm, Key, Nonce};
 use anyhow::{Result, bail};
+use rand::RngCore;
+use sha2::{Digest, Sha256};
 
 pub fn encrypt_data(data: &[u8], password: &str) -> Result<Vec<u8>> {
     let mut hasher = Sha256::new();
@@ -15,7 +15,8 @@ pub fn encrypt_data(data: &[u8], password: &str) -> Result<Vec<u8>> {
     rand::thread_rng().fill_bytes(&mut nonce_bytes);
     let nonce = Nonce::from_slice(&nonce_bytes);
 
-    let ciphertext = cipher.encrypt(nonce, data)
+    let ciphertext = cipher
+        .encrypt(nonce, data)
         .map_err(|e| anyhow::anyhow!("Encryption failed: {:?}", e))?;
 
     let mut result = nonce_bytes.to_vec();
@@ -37,8 +38,12 @@ pub fn decrypt_data(data: &[u8], password: &str) -> Result<Vec<u8>> {
     let nonce = Nonce::from_slice(&data[..12]);
     let ciphertext = &data[12..];
 
-    let plaintext = cipher.decrypt(nonce, ciphertext)
-        .map_err(|e| anyhow::anyhow!("Decryption failed (incorrect password or corrupted data): {:?}", e))?;
+    let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|e| {
+        anyhow::anyhow!(
+            "Decryption failed (incorrect password or corrupted data): {:?}",
+            e
+        )
+    })?;
 
     Ok(plaintext)
 }

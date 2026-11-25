@@ -1,17 +1,17 @@
-mod parser;
-mod mask;
-mod diff;
-mod validator;
 mod crypto;
+mod diff;
 mod export;
+mod mask;
+mod parser;
+mod validator;
 
+use clap::{Parser, Subcommand};
+use colored::*;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 use std::process;
-use clap::{Parser, Subcommand};
-use colored::*;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -51,7 +51,11 @@ enum Commands {
         #[arg(default_value = ".env", help = "Path to the .env file")]
         file: String,
 
-        #[arg(long, default_value = "default", help = "Export format: default, shell, docker, json")]
+        #[arg(
+            long,
+            default_value = "default",
+            help = "Export format: default, shell, docker, json"
+        )]
         format: String,
 
         #[arg(long, help = "Show sensitive values without masking in export")]
@@ -61,20 +65,36 @@ enum Commands {
         #[arg(help = "Path to the .env file to encrypt")]
         file: String,
 
-        #[arg(short, long, help = "Output path for the encrypted file (defaults to <file>.enc)")]
+        #[arg(
+            short,
+            long,
+            help = "Output path for the encrypted file (defaults to <file>.enc)"
+        )]
         output: Option<String>,
 
-        #[arg(short, long, help = "Password for encryption. If not provided, you will be prompted.")]
+        #[arg(
+            short,
+            long,
+            help = "Password for encryption. If not provided, you will be prompted."
+        )]
         password: Option<String>,
     },
     Decrypt {
         #[arg(help = "Path to the encrypted file to decrypt")]
         file: String,
 
-        #[arg(short, long, help = "Output path for the decrypted file (defaults to .env)")]
+        #[arg(
+            short,
+            long,
+            help = "Output path for the decrypted file (defaults to .env)"
+        )]
         output: Option<String>,
 
-        #[arg(short, long, help = "Password for decryption. If not provided, you will be prompted.")]
+        #[arg(
+            short,
+            long,
+            help = "Password for decryption. If not provided, you will be prompted."
+        )]
         password: Option<String>,
     },
     Merge {
@@ -84,7 +104,11 @@ enum Commands {
         #[arg(help = "Path to the environment file with override values")]
         file2: String,
 
-        #[arg(short, long, help = "Output file path. If not provided, output will be printed to stdout.")]
+        #[arg(
+            short,
+            long,
+            help = "Output file path. If not provided, output will be printed to stdout."
+        )]
         output: Option<String>,
     },
     Init {
@@ -114,7 +138,11 @@ fn main() {
             };
             export::export_variables(&vars, "default", !unmask);
         }
-        Commands::Diff { file1, file2, unmask } => {
+        Commands::Diff {
+            file1,
+            file2,
+            unmask,
+        } => {
             let p1 = Path::new(&file1);
             let p2 = Path::new(&file2);
             let vars1 = match parser::parse_env_file(p1) {
@@ -147,7 +175,11 @@ fn main() {
                 process::exit(1);
             }
         }
-        Commands::Export { file, format, unmask } => {
+        Commands::Export {
+            file,
+            format,
+            unmask,
+        } => {
             let path = Path::new(&file);
             let vars = match parser::parse_env_file(path) {
                 Ok(v) => v,
@@ -158,7 +190,11 @@ fn main() {
             };
             export::export_variables(&vars, &format, !unmask);
         }
-        Commands::Encrypt { file, output, password } => {
+        Commands::Encrypt {
+            file,
+            output,
+            password,
+        } => {
             let path = Path::new(&file);
             let out_path_str = output.unwrap_or_else(|| format!("{}.enc", file));
             let out_path = Path::new(&out_path_str);
@@ -198,7 +234,11 @@ fn main() {
                 }
             }
         }
-        Commands::Decrypt { file, output, password } => {
+        Commands::Decrypt {
+            file,
+            output,
+            password,
+        } => {
             let path = Path::new(&file);
             let out_path_str = output.unwrap_or_else(|| ".env".to_string());
             let out_path = Path::new(&out_path_str);
@@ -238,7 +278,11 @@ fn main() {
                 }
             }
         }
-        Commands::Merge { file1, file2, output } => {
+        Commands::Merge {
+            file1,
+            file2,
+            output,
+        } => {
             let p1 = Path::new(&file1);
             let p2 = Path::new(&file2);
 
@@ -275,12 +319,20 @@ fn main() {
                 }
             }
         }
-        Commands::Init { from, output, interactive } => {
+        Commands::Init {
+            from,
+            output,
+            interactive,
+        } => {
             let template_path = Path::new(&from);
             let out_path = Path::new(&output);
 
             if !template_path.exists() {
-                eprintln!("{}: Template file {:?} does not exist", "Error".red().bold(), template_path);
+                eprintln!(
+                    "{}: Template file {:?} does not exist",
+                    "Error".red().bold(),
+                    template_path
+                );
                 process::exit(1);
             }
 
@@ -295,7 +347,10 @@ fn main() {
             let mut out_vars = BTreeMap::new();
 
             if interactive {
-                println!("{}", "Interactive configuration initialization:".green().bold());
+                println!(
+                    "{}",
+                    "Interactive configuration initialization:".green().bold()
+                );
                 for (k, v) in template_vars {
                     print!("{} [{}]? ", k.bold(), v.dimmed());
                     io::stdout().flush().unwrap();
@@ -317,7 +372,10 @@ fn main() {
                 process::exit(1);
             }
 
-            println!("Successfully initialized environment file at {:?}", out_path);
+            println!(
+                "Successfully initialized environment file at {:?}",
+                out_path
+            );
         }
     }
 }

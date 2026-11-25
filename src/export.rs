@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use colored::*;
+use std::collections::BTreeMap;
 
 pub fn export_variables(variables: &BTreeMap<String, String>, format: &str, mask: bool) {
     match format {
